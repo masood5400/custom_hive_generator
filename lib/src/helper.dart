@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:hive/hive.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -12,20 +13,20 @@ class HiveFieldInfo {
 
   final int index;
   final DartObject? defaultValue;
-  final Map<int, String> versioningFlow;
+  final Map<int, DartType> versioningFlow;
 }
 
 HiveFieldInfo? getHiveFieldAnn(Element element) {
   var hiveFieldObj = _hiveFieldChecker.firstAnnotationOfExact(element);
   var hiveVersionFieldsObj = _hiveVersionFieldChecker
       .annotationsOfExact(element, throwOnUnresolved: false);
-  Map<int, String> versioningFlow = {};
+  Map<int, DartType> versioningFlow = {};
   if (hiveFieldObj == null) return null;
   if (hiveVersionFieldsObj.isNotEmpty) {
     hiveVersionFieldsObj.forEach(
       (hiveVersionField) {
         versioningFlow[hiveVersionField.getField('version')!.toIntValue()!] =
-            (hiveVersionField.getField('selectType')!) as String;
+            (hiveVersionField.getField('selectType')!).type!;
       },
     );
   }

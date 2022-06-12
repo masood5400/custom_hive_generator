@@ -7,7 +7,7 @@ class AdapterField {
   final String name;
   final DartType type;
   final DartObject? defaultValue;
-  final Map<int, String> versioningFlow;
+  final Map<int, DartType> versioningFlow;
 
   AdapterField(
       this.index, this.name, this.type, this.defaultValue, this.versioningFlow);
