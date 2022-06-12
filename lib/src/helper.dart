@@ -18,8 +18,8 @@ class HiveFieldInfo {
 
 HiveFieldInfo? getHiveFieldAnn(Element element) {
   var hiveFieldObj = _hiveFieldChecker.firstAnnotationOfExact(element);
-  var hiveVersionFieldsObj =
-      _hiveVersionFieldChecker.annotationsOfExact(element);
+  var hiveVersionFieldsObj = _hiveVersionFieldChecker
+      .annotationsOfExact(element, throwOnUnresolved: false);
   Map<int, DartType> versioningFlow = {};
   if (hiveFieldObj == null || hiveVersionFieldsObj.isEmpty) return null;
   hiveVersionFieldsObj.forEach(
