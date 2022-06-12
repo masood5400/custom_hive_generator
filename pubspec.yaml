@@ -10,7 +10,8 @@ environment:
 dependencies:
   build: ^2.0.0
   source_gen: ^1.0.0
-  hive: ^2.0.4
+  hive: 
+    path: D:\\Masoud\\Codes\\hive\\hive
   analyzer: ">=1.0.0 <5.0.0"
   source_helper: ^1.1.0
 
@@ -18,4 +19,4 @@ dev_dependencies:
   test: ^1.17.11
   build_test: any
   build_runner: any
-  pedantic: ^1.11.1
+  lints: 1.0.0

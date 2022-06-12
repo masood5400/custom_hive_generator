@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -16,7 +15,8 @@ class ClassBuilder extends Builder {
     ClassElement cls,
     List<AdapterField> getters,
     List<AdapterField> setters,
-  ) : super(cls, getters, setters);
+    int hiveVersion,
+  ) : super(cls, getters, setters, hiveVersion);
 
   var hiveListChecker = const TypeChecker.fromRuntime(HiveList);
   var listChecker = const TypeChecker.fromRuntime(List);
@@ -45,6 +45,7 @@ class ClassBuilder extends Builder {
       for (int i = 0; i < numOfFields; i++)
         reader.readByte(): reader.read(),
     };
+    int currentVersion = fields[${fields.last.index}] as int;
     return ${cls.name}(
     ''');
 
@@ -56,11 +57,8 @@ class ClassBuilder extends Builder {
         if (param.isNamed) {
           code.write('${param.name}: ');
         }
-        code.write(_value(
-          param.type,
-          'fields[${field.index}]',
-          field.defaultValue,
-        ));
+        code.write(_value(field));
+
         code.writeln(',');
         fields.remove(field);
       }
@@ -72,22 +70,53 @@ class ClassBuilder extends Builder {
     // as initializing formals. We do so using cascades.
     for (var field in fields) {
       code.write('..${field.name} = ');
-      code.writeln(_value(
-        field.type,
-        'fields[${field.index}]',
-        field.defaultValue,
-      ));
+      code.writeln(_value(field));
     }
 
     code.writeln(';');
+    code.writeln('}');
+    for (var field in fields) {
+      code.writeln();
+      code.writeln(_migrationMethodGenerator(field));
+    }
 
     return code.toString();
   }
 
-  String _value(DartType type, String variable, DartObject? defaultValue) {
-    var value = _cast(type, variable);
-    if (defaultValue?.isNull != false) return value;
-    return '$variable == null ? ${constantToString(defaultValue!)} : $value';
+  String _migrationMethodGenerator(AdapterField field) {
+    var code = StringBuffer();
+    var displayType = field.type.getDisplayString(withNullability: false);
+    code.write(
+        '''$displayType ${field.name}migration({data, required int currentVersion}) {
+              dynamic resultValue;
+              for (var i = currentVersion; i <= lastVersion; i++) {''');
+    field.versioningFlow.forEach((key, value) {
+      code.writeln('''if(i==$key){
+          resultValue = data as ${value.getDisplayString(withNullability: false)};
+        }''');
+    });
+    code.writeln('}');
+    code.writeln('return resultValue as $displayType;');
+    code.writeln('}');
+    return code.toString();
+  }
+
+  String _value(AdapterField? field) {
+    String value;
+    if (field?.versioningFlow.isNotEmpty ?? false) {
+      value = _migrationCast(field);
+    } else {
+      value = _cast(field!.type, 'fields[${field.index}]');
+    }
+    if (field?.defaultValue?.isNull != false) return value;
+    return 'fields[${field?.index}] == null ? ${constantToString(field?.defaultValue!)} : $value';
+  }
+
+  String _migrationCast(AdapterField? field) {
+    return '''migrationIdMethod(
+                data: fields[${field?.index ?? 0}],
+                currentVersion: currentVersion,
+              )''';
   }
 
   String _cast(DartType type, String variable) {
@@ -153,13 +182,15 @@ class ClassBuilder extends Builder {
   String buildWrite() {
     var code = StringBuffer();
     code.writeln('writer');
-    code.writeln('..writeByte(${getters.length})');
+    code.writeln('..writeByte(${getters.length + 1})');
     for (var field in getters) {
       var value = _convertIterable(field.type, 'obj.${field.name}');
       code.writeln('''
       ..writeByte(${field.index})
       ..write($value)''');
     }
+    code.writeln('..writeByte(${getters.length})');
+    code.writeln('..write($hiveVersion)');
     code.writeln(';');
 
     return code.toString();

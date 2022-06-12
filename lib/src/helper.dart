@@ -1,24 +1,37 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:hive/hive.dart';
 import 'package:source_gen/source_gen.dart';
 
 final _hiveFieldChecker = const TypeChecker.fromRuntime(HiveField);
+final _hiveVersionFieldChecker =
+    const TypeChecker.fromRuntime(HiveVersionField);
 
 class HiveFieldInfo {
-  HiveFieldInfo(this.index, this.defaultValue);
+  HiveFieldInfo(this.index, this.defaultValue, this.versioningFlow);
 
   final int index;
   final DartObject? defaultValue;
+  final Map<int, DartType> versioningFlow;
 }
 
 HiveFieldInfo? getHiveFieldAnn(Element element) {
-  var obj = _hiveFieldChecker.firstAnnotationOfExact(element);
-  if (obj == null) return null;
-
+  var hiveFieldObj = _hiveFieldChecker.firstAnnotationOfExact(element);
+  var hiveVersionFieldsObj =
+      _hiveVersionFieldChecker.annotationsOfExact(element);
+  Map<int, DartType> versioningFlow = {};
+  if (hiveFieldObj == null || hiveVersionFieldsObj.isEmpty) return null;
+  hiveVersionFieldsObj.forEach(
+    (hiveVersionField) {
+      versioningFlow[hiveVersionField.getField('version')!.toIntValue()!] =
+          hiveVersionField.getField('selectType')! as DartType;
+    },
+  );
   return HiveFieldInfo(
-    obj.getField('index')!.toIntValue()!,
-    obj.getField('defaultValue'),
+    hiveFieldObj.getField('index')!.toIntValue()!,
+    hiveFieldObj.getField('defaultValue'),
+    versioningFlow,
   );
 }
 

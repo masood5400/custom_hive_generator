@@ -34,21 +34,23 @@ class TypeAdapterGenerator extends GeneratorForAnnotation<HiveType> {
     verifyFieldIndices(setters);
 
     var typeId = getTypeId(annotation);
+    var version = getVersion(annotation);
 
     var adapterName = getAdapterName(cls.name, annotation);
     var builder = cls.isEnum
         ? EnumBuilder(cls, getters)
-        : ClassBuilder(cls, getters, setters);
+        : ClassBuilder(cls, getters, setters, version);
 
     return '''
     class $adapterName extends TypeAdapter<${cls.name}> {
       @override
       final int typeId = $typeId;
+      final int lastVersion = $version;
 
       @override
       ${cls.name} read(BinaryReader reader) {
         ${builder.buildRead()}
-      }
+      
 
       @override
       void write(BinaryWriter writer, ${cls.name} obj) {
@@ -111,6 +113,7 @@ class TypeAdapterGenerator extends GeneratorForAnnotation<HiveType> {
             field.name,
             field.type,
             getterAnn.defaultValue,
+            getterAnn.versioningFlow,
           ));
         }
       }
@@ -126,6 +129,7 @@ class TypeAdapterGenerator extends GeneratorForAnnotation<HiveType> {
             field.name,
             field.type,
             setterAnn.defaultValue,
+            setterAnn.versioningFlow,
           ));
         }
       }
@@ -166,5 +170,13 @@ class TypeAdapterGenerator extends GeneratorForAnnotation<HiveType> {
       'You have to provide a non-null typeId.',
     );
     return annotation.read('typeId').intValue;
+  }
+
+  int getVersion(ConstantReader annotation) {
+    if (annotation.read('typeId').isNull) {
+      return 1;
+    } else {
+      return annotation.read('version').intValue;
+    }
   }
 }
