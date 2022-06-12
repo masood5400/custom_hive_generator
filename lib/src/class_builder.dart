@@ -90,16 +90,16 @@ class ClassBuilder extends Builder {
     var migrateCode = StringBuffer();
     var displayType = field.type.getDisplayString(withNullability: false);
     migrateCode.write(
-        '''$displayType ${field.name}Migration({data, required int currentVersion}) {
+        '''$displayType? ${field.name}Migration({data, required int currentVersion}) {
               dynamic resultValue;
               for (var i = currentVersion; i <= lastVersion; i++) {''');
     field.versioningFlow.forEach((key, value) {
       migrateCode.writeln('''if(i==$key){
-          resultValue = data as $value;
+          resultValue = data as ${value.runtimeType}?;
         }''');
     });
     migrateCode.writeln('}');
-    migrateCode.writeln('return resultValue as $displayType;');
+    migrateCode.writeln('return resultValue as $displayType?;');
     migrateCode.writeln('}');
     return migrateCode.toString();
   }
