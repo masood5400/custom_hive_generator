@@ -21,13 +21,16 @@ HiveFieldInfo? getHiveFieldAnn(Element element) {
   var hiveVersionFieldsObj = _hiveVersionFieldChecker
       .annotationsOfExact(element, throwOnUnresolved: false);
   Map<int, DartType> versioningFlow = {};
-  if (hiveFieldObj == null || hiveVersionFieldsObj.isEmpty) return null;
-  hiveVersionFieldsObj.forEach(
-    (hiveVersionField) {
-      versioningFlow[hiveVersionField.getField('version')!.toIntValue()!] =
-          hiveVersionField.getField('selectType')! as DartType;
-    },
-  );
+  if (hiveFieldObj == null) return null;
+  if (hiveVersionFieldsObj.isNotEmpty) {
+    hiveVersionFieldsObj.forEach(
+      (hiveVersionField) {
+        versioningFlow[hiveVersionField.getField('version')!.toIntValue()!] =
+            hiveVersionField.getField('selectType')! as DartType;
+      },
+    );
+  }
+
   return HiveFieldInfo(
     hiveFieldObj.getField('index')!.toIntValue()!,
     hiveFieldObj.getField('defaultValue'),
