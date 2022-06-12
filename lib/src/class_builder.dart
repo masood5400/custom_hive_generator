@@ -96,7 +96,7 @@ class ClassBuilder extends Builder {
     field.versioningFlow.forEach((key, value) {
       print(value);
       migrateCode.writeln('''if(i==$key){
-          resultValue = data as $value?;
+          resultValue = data as ${value.getDisplayString(withNullability: true)};
         }''');
     });
     migrateCode.writeln('}');
