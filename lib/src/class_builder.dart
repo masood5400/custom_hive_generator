@@ -94,8 +94,9 @@ class ClassBuilder extends Builder {
               dynamic resultValue;
               for (var i = currentVersion; i <= lastVersion; i++) {''');
     field.versioningFlow.forEach((key, value) {
+      print(value);
       migrateCode.writeln('''if(i==$key){
-          resultValue = data as ($value)?;
+          resultValue = data as $value?;
         }''');
     });
     migrateCode.writeln('}');
