@@ -78,8 +78,7 @@ class ClassBuilder extends Builder {
     fields = setters.toList();
     for (var field in fields) {
       if (field.versioningFlow.isNotEmpty) {
-        code.writeln('');
-        print('************Field is: ${field.name}');
+        code.writeln();
         code.writeln(_migrationMethodGenerator(field));
       }
     }
