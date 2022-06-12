@@ -12,20 +12,20 @@ class HiveFieldInfo {
 
   final int index;
   final DartObject? defaultValue;
-  final Map<int, Object> versioningFlow;
+  final Map<int, String> versioningFlow;
 }
 
 HiveFieldInfo? getHiveFieldAnn(Element element) {
   var hiveFieldObj = _hiveFieldChecker.firstAnnotationOfExact(element);
   var hiveVersionFieldsObj = _hiveVersionFieldChecker
       .annotationsOfExact(element, throwOnUnresolved: false);
-  Map<int, Object> versioningFlow = {};
+  Map<int, String> versioningFlow = {};
   if (hiveFieldObj == null) return null;
   if (hiveVersionFieldsObj.isNotEmpty) {
     hiveVersionFieldsObj.forEach(
       (hiveVersionField) {
         versioningFlow[hiveVersionField.getField('version')!.toIntValue()!] =
-            (hiveVersionField.getField('selectType')!);
+            (hiveVersionField.getField('selectType')!).toString();
       },
     );
   }

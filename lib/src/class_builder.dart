@@ -95,7 +95,7 @@ class ClassBuilder extends Builder {
               for (var i = currentVersion; i <= lastVersion; i++) {''');
     field.versioningFlow.forEach((key, value) {
       migrateCode.writeln('''if(i==$key){
-          resultValue = data as ${value.runtimeType}?;
+          resultValue = data as ($value)?;
         }''');
     });
     migrateCode.writeln('}');
