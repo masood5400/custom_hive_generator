@@ -75,30 +75,34 @@ class ClassBuilder extends Builder {
 
     code.writeln(';');
     code.writeln('}');
+    fields = setters.toList();
     for (var field in fields) {
-      code.writeln();
-      code.writeln(_migrationMethodGenerator(field));
+      if (field.versioningFlow.isNotEmpty) {
+        code.writeln('');
+        print('************Field is: ${field.name}');
+        code.writeln(_migrationMethodGenerator(field));
+      }
     }
 
     return code.toString();
   }
 
   String _migrationMethodGenerator(AdapterField field) {
-    var code = StringBuffer();
+    var migrateCode = StringBuffer();
     var displayType = field.type.getDisplayString(withNullability: false);
-    code.write(
+    migrateCode.write(
         '''$displayType ${field.name}migration({data, required int currentVersion}) {
               dynamic resultValue;
               for (var i = currentVersion; i <= lastVersion; i++) {''');
     field.versioningFlow.forEach((key, value) {
-      code.writeln('''if(i==$key){
+      migrateCode.writeln('''if(i==$key){
           resultValue = data as $value;
         }''');
     });
-    code.writeln('}');
-    code.writeln('return resultValue as $displayType;');
-    code.writeln('}');
-    return code.toString();
+    migrateCode.writeln('}');
+    migrateCode.writeln('return resultValue as $displayType;');
+    migrateCode.writeln('}');
+    return migrateCode.toString();
   }
 
   String _value(AdapterField? field) {
@@ -113,7 +117,8 @@ class ClassBuilder extends Builder {
   }
 
   String _migrationCast(AdapterField? field) {
-    return '''migrationIdMethod(
+    var displayType = field?.type.getDisplayString(withNullability: false);
+    return '''$displayType ${field?.name}migration(
                 data: fields[${field?.index ?? 0}],
                 currentVersion: currentVersion,
               )''';
