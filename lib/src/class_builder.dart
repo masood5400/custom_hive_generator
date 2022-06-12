@@ -90,7 +90,7 @@ class ClassBuilder extends Builder {
     var migrateCode = StringBuffer();
     var displayType = field.type.getDisplayString(withNullability: false);
     migrateCode.write(
-        '''$displayType ${field.name}migration({data, required int currentVersion}) {
+        '''$displayType ${field.name}Migration({data, required int currentVersion}) {
               dynamic resultValue;
               for (var i = currentVersion; i <= lastVersion; i++) {''');
     field.versioningFlow.forEach((key, value) {
@@ -116,8 +116,7 @@ class ClassBuilder extends Builder {
   }
 
   String _migrationCast(AdapterField? field) {
-    var displayType = field?.type.getDisplayString(withNullability: false);
-    return '''$displayType ${field?.name}migration(
+    return '''${field?.name}Migration(
                 data: fields[${field?.index ?? 0}],
                 currentVersion: currentVersion,
               )''';
