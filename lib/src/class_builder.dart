@@ -92,7 +92,7 @@ class ClassBuilder extends Builder {
               for (var i = currentVersion; i <= lastVersion; i++) {''');
     field.versioningFlow.forEach((key, value) {
       code.writeln('''if(i==$key){
-          resultValue = data as ${value.getDisplayString(withNullability: false)};
+          resultValue = data as $value;
         }''');
     });
     code.writeln('}');
