@@ -45,7 +45,7 @@ class ClassBuilder extends Builder {
       for (int i = 0; i < numOfFields; i++)
         reader.readByte(): reader.read(),
     };
-    int? currentVersion = fields[${fields.last.index}] as int?;
+    // int? currentVersion = fields[${fields.last.index}] as int?;
     return ${cls.name}(
     ''');
 
@@ -107,13 +107,13 @@ class ClassBuilder extends Builder {
 
   String _value(AdapterField? field) {
     String value;
-    if (field?.versioningFlow.isNotEmpty ?? false) {
-      value = _migrationCast(field);
-    } else {
-      value = _cast(field!.type, 'fields[${field.index}]');
-    }
-    if (field?.defaultValue?.isNull != false) return value;
-    return 'fields[${field?.index}] == null ? ${constantToString(field?.defaultValue!)} : $value';
+    // if (field?.versioningFlow.isNotEmpty ?? false) {
+    //   value = _migrationCast(field);
+    // } else {
+    value = _cast(field!.type, 'fields[${field.index}]');
+    // }
+    if (field.defaultValue?.isNull != false) return value;
+    return 'fields[${field.index}] == null ? ${constantToString(field.defaultValue!)} : $value';
   }
 
   String _migrationCast(AdapterField? field) {
