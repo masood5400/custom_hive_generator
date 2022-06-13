@@ -45,7 +45,7 @@ class ClassBuilder extends Builder {
       for (int i = 0; i < numOfFields; i++)
         reader.readByte(): reader.read(),
     };
-    int currentVersion = fields[${fields.last.index}] as int;
+    int? currentVersion = fields[${fields.last.index}] as int?;
     return ${cls.name}(
     ''');
 
@@ -119,7 +119,7 @@ class ClassBuilder extends Builder {
   String _migrationCast(AdapterField? field) {
     return '''${field?.name}Migration(
                 data: fields[${field?.index ?? 0}],
-                currentVersion: currentVersion,
+                currentVersion: currentVersion ?? 1,
               )''';
   }
 
