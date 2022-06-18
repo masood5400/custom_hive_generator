@@ -34,18 +34,18 @@ class TypeAdapterGenerator extends GeneratorForAnnotation<HiveType> {
     verifyFieldIndices(setters);
 
     var typeId = getTypeId(annotation);
-    var version = getVersion(annotation);
+    var lastVersion = getVersion(annotation);
 
     var adapterName = getAdapterName(cls.name, annotation);
     var builder = cls.isEnum
         ? EnumBuilder(cls, getters)
-        : ClassBuilder(cls, getters, setters, version);
+        : ClassBuilder(cls, getters, setters, lastVersion);
 
     return '''
     class $adapterName extends TypeAdapter<${cls.name}> {
       @override
       final int typeId = $typeId;
-      final int lastVersion = $version;
+      final int lastVersion = $lastVersion;
 
       @override
       ${cls.name} read(BinaryReader reader) {

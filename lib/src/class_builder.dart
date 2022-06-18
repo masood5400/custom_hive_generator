@@ -24,6 +24,10 @@ class ClassBuilder extends Builder {
   var setChecker = const TypeChecker.fromRuntime(Set);
   var iterableChecker = const TypeChecker.fromRuntime(Iterable);
   var uint8ListChecker = const TypeChecker.fromRuntime(Uint8List);
+  var stringChecker = const TypeChecker.fromRuntime(String);
+  var boolChecker = const TypeChecker.fromRuntime(bool);
+  var doubleChecker = const TypeChecker.fromRuntime(double);
+  var intChecker = const TypeChecker.fromRuntime(int);
 
   @override
   String buildRead() {
@@ -45,7 +49,7 @@ class ClassBuilder extends Builder {
       for (int i = 0; i < numOfFields; i++)
         reader.readByte(): reader.read(),
     };
-    // int? currentVersion = fields[${fields.last.index}] as int?;
+    int? currentVersion = fields[${fields.last.index}] as int?;
     return ${cls.name}(
     ''');
 
@@ -90,40 +94,64 @@ class ClassBuilder extends Builder {
     var migrateCode = StringBuffer();
     var displayType = field.type.getDisplayString(withNullability: false);
     migrateCode.write(
-        '''$displayType? ${field.name}Migration({data, required int currentVersion}) {
-              dynamic resultValue;
-              for (var i = currentVersion; i <= lastVersion; i++) {''');
-    field.versioningFlow.forEach((key, value) {
-      print(value);
+        '''$displayType? ${field.name}Migration({dynamic field, required int currentVersion}) {
+              dynamic resultValue = field;
+              for (var i = currentVersion; i < lastVersion; i++) {''');
+    field.versioningFlow.forEach((key, DartType value) {
       migrateCode.writeln('''if(i==$key){
-          resultValue = data as ${value.getDisplayString(withNullability: true)};
+          ${_migrationCastFlow(version: key, type: value, field: field)}
         }''');
     });
     migrateCode.writeln('}');
+    migrateCode.writeln(
+        '''${_migrationCastFlow(version: 3, type: field.type, field: field)}''');
     migrateCode.writeln('return resultValue as $displayType?;');
     migrateCode.writeln('}');
     return migrateCode.toString();
   }
 
+  String _migrationCastFlow({
+    required int version,
+    required DartType type,
+    required AdapterField field,
+  }) {
+    var currentSuffix = _suffixFromType(type);
+    return _findTypeFunction(type, other: () {
+      return '''resultValue = ${cls.name}().get${field.name.capitalize()}(resultValue,version: $version)''';
+    }, nonIterable: () {
+      return '''resultValue = CastUtils().cast<${_displayString(type)}?>(resultValue);''';
+    });
+  }
+
+  String _findTypeFunction(DartType type,
+      {required String Function() nonIterable,
+      required String Function() other}) {
+    if ((stringChecker.isAssignableFromType(type) ||
+        boolChecker.isAssignableFromType(type) ||
+        intChecker.isAssignableFromType(type) ||
+        doubleChecker.isAssignableFromType(type))) {
+      return nonIterable();
+    } else {
+      return other();
+    }
+  }
+
   String _value(AdapterField? field) {
     String value;
-    // if (field?.versioningFlow.isNotEmpty ?? false) {
-    //   value = _migrationCast(field);
-    // } else {
-    value = _cast(field!.type, 'fields[${field.index}]');
-    // }
-    if (field.defaultValue?.isNull != false) return value;
-    return 'fields[${field.index}] == null ? ${constantToString(field.defaultValue!)} : $value';
+    if (field?.versioningFlow.isNotEmpty ?? false) {
+      value = _migrationCast(field);
+    } else {
+      value = _cast(field!.type, 'fields[${field.index}]');
+    }
+    if (field?.defaultValue?.isNull != false) return value;
+    return 'fields[${field?.index}] == null ? ${constantToString(field?.defaultValue!)} : $value';
   }
 
   String _migrationCast(AdapterField? field) {
-    return '''${field?.name}Migration(
-                data: fields[${field?.index ?? 0}],
-                currentVersion: currentVersion ?? 1,
-              )''';
+    return '''${field?.name}Migration(fields[${field?.index ?? 0}])''';
   }
 
-  String _cast(DartType type, String variable) {
+  String _cast(DartType type, String variable, {String? nameOfVariable}) {
     var suffix = _suffixFromType(type);
     if (hiveListChecker.isAssignableFromType(type)) {
       return '($variable as HiveList$suffix)$suffix.castHiveList()';
@@ -132,8 +160,17 @@ class ClassBuilder extends Builder {
       return '($variable as List$suffix)${_castIterable(type)}';
     } else if (mapChecker.isAssignableFromType(type)) {
       return '($variable as Map$suffix)${_castMap(type)}';
-    } else {
+    } else if ((stringChecker.isAssignableFromType(type) ||
+        boolChecker.isAssignableFromType(type) ||
+        intChecker.isAssignableFromType(type) ||
+        doubleChecker.isAssignableFromType(type))) {
       return '$variable as ${_displayString(type)}';
+    } else {
+      if (nameOfVariable != null) {
+        return '${_displayString(type)}.fromJson({\'$nameOfVariable\': $variable});';
+      } else {
+        return '$variable as ${_displayString(type)}';
+      }
     }
   }
 
