@@ -26,7 +26,7 @@ HiveFieldInfo? getHiveFieldAnn(Element element) {
     hiveVersionFieldsObj.forEach(
       (hiveVersionField) {
         versioningFlow[hiveVersionField.getField('version')!.toIntValue()!] =
-            (hiveVersionField.getField('type')!).type!;
+            (hiveVersionField.getField('type')!).toTypeValue()!;
       },
     );
   }
