@@ -173,6 +173,8 @@ class ClassBuilder extends Builder {
     } else {
       if (nameOfVariable != null) {
         return '${_displayString(type)}.fromJson({\'$nameOfVariable\': $variable});';
+      } else if (_displayString(type).startsWith('Color')) {
+        return 'Color($variable)';
       } else {
         return '$variable as ${_displayString(type)}';
       }
@@ -230,7 +232,7 @@ class ClassBuilder extends Builder {
     code.writeln('writer');
     code.writeln('..writeByte(${getters.length + 1})');
     for (var field in getters) {
-      var value = _convertIterable(field.type, 'obj.${field.name}');
+      var value = _convertIterable(field.type, field);
       code.writeln('''
       ..writeByte(${field.index})
       ..write($value)''');
@@ -242,9 +244,9 @@ class ClassBuilder extends Builder {
     return code.toString();
   }
 
-  String _convertIterable(DartType type, String accessor) {
+  String _convertIterable(DartType type, AdapterField accessor) {
     if (listChecker.isAssignableFromType(type)) {
-      return accessor;
+      return 'obj.${accessor.name}';
     } else
     // Using assignable because Set? and Iterable? are not exactly Set and
     // Iterable
@@ -253,7 +255,9 @@ class ClassBuilder extends Builder {
       var suffix = _accessorSuffixFromType(type);
       return '$accessor$suffix.toList()';
     } else {
-      return accessor;
+      return _displayString(accessor.type).startsWith('Color')
+          ? 'obj.${accessor.name}?.value'
+          : 'obj.${accessor.name}';
     }
   }
 }
