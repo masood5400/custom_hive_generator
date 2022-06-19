@@ -120,7 +120,7 @@ class ClassBuilder extends Builder {
     return _findTypeFunction(type, other: () {
       return '''resultValue = ${cls.name}().get${field.name.capitalize()}(resultValue ,version: $version);''';
     }, nonIterable: () {
-      return '''resultValue = CastUtils().cast<${_displayString(type)}?>(resultValue);''';
+      return '''resultValue = CastUtils().cast<${_displayString(type)}>(resultValue);''';
     });
   }
 
