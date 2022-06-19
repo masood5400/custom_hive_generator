@@ -95,7 +95,7 @@ class ClassBuilder extends Builder {
     var migrateCode = StringBuffer();
     var displayType = field.type.getDisplayString(withNullability: false);
     migrateCode.write(
-        '''$displayType? ${field.name}Migration({dynamic field, required int currentVersion}) {
+        '''$displayType? ${field.name}Migration({dynamic field, int currentVersion = 1}) {
               dynamic resultValue = field;
               for (var i = currentVersion; i < lastVersion; i++) {''');
     field.versioningFlow.forEach((key, DartType value) {
@@ -149,7 +149,7 @@ class ClassBuilder extends Builder {
   }
 
   String _migrationCast(AdapterField? field) {
-    return '''${field?.name}Migration(fields: fields[${field?.index ?? 0}], currentVersion: currentVersion)''';
+    return '''${field?.name}Migration(field: fields[${field?.index ?? 0}], currentVersion: currentVersion)''';
   }
 
   String _cast(DartType type, String variable, {String? nameOfVariable}) {
