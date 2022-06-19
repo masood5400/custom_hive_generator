@@ -5,6 +5,7 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_generator/src/builder.dart';
+import 'package:hive_generator/src/extensions.dart';
 import 'package:hive_generator/src/helper.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -117,7 +118,7 @@ class ClassBuilder extends Builder {
   }) {
     var currentSuffix = _suffixFromType(type);
     return _findTypeFunction(type, other: () {
-      return '''resultValue = ${cls.name}().get${field.name.capitalize()}(resultValue,version: $version)''';
+      return '''resultValue = ${cls.name}().get${field.name.capitalize()}(${_displayString(type)}? resultValue,version: $version)''';
     }, nonIterable: () {
       return '''resultValue = CastUtils().cast<${_displayString(type)}?>(resultValue);''';
     });
