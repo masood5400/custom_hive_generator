@@ -149,7 +149,7 @@ class ClassBuilder extends Builder {
   }
 
   String _migrationCast(AdapterField? field) {
-    return '''${field?.name}Migration(field: fields[${field?.index ?? 0}], currentVersion: currentVersion)''';
+    return '''${field?.name}Migration(field: fields[${field?.index ?? 0}], currentVersion: currentVersion ?? 1)''';
   }
 
   String _cast(DartType type, String variable, {String? nameOfVariable}) {
