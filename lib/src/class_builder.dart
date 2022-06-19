@@ -50,7 +50,7 @@ class ClassBuilder extends Builder {
       for (int i = 0; i < numOfFields; i++)
         reader.readByte(): reader.read(),
     };
-    int? currentVersion = fields[${fields.last.index}] as int?;
+    int? currentVersion = fields[${fields.last.index + 1}] as int?;
     return ${cls.name}(
     ''');
 
@@ -97,13 +97,16 @@ class ClassBuilder extends Builder {
     migrateCode.write(
         '''$displayType? ${field.name}Migration({dynamic field, int currentVersion = 1}) {
               dynamic resultValue = field;
-              for (var i = currentVersion; i < lastVersion; i++) {''');
+              for (var i = currentVersion; i < lastVersion; i++) {
+                switch (i) {''');
     field.versioningFlow.forEach((key, DartType value) {
-      migrateCode.writeln('''if(i==$key){
+      migrateCode.writeln('''case $key:
           ${_migrationCastFlow(version: key, type: value, field: field)}
-        }''');
+        break;''');
     });
-    migrateCode.writeln('}');
+    migrateCode.writeln('''default:
+      }
+      }''');
     migrateCode.writeln(
         '''${_migrationCastFlow(version: 3, type: field.type, field: field)}''');
     migrateCode.writeln('return resultValue as $displayType?;');
