@@ -121,8 +121,7 @@ class ClassBuilder extends Builder {
   }) {
     var currentSuffix = _suffixFromType(type);
     return _findTypeFunction(type, other: () {
-      return '''// The dart Type is: ${_displayString(type)}
-    resultValue = ${cls.name}().get${field.name.capitalize()}(resultValue ,version: $version);''';
+      return '''resultValue = ${cls.name}().get${field.name.capitalize()}(resultValue ,version: $version);''';
     }, nonIterable: () {
       return '''resultValue = CastUtils().cast<${_displayString(type)}>(currentValue: resultValue);''';
     });
