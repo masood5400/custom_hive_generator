@@ -107,21 +107,21 @@ class ClassBuilder extends Builder {
     migrateCode.writeln('''default:
       }
       }''');
-    migrateCode.writeln(
-        '''${_migrationCastFlow(version: 3, type: field.type, field: field)}''');
+    migrateCode
+        .writeln('''${_migrationCastFlow(type: field.type, field: field)}''');
     migrateCode.writeln('return resultValue as $displayType?;');
     migrateCode.writeln('}');
     return migrateCode.toString();
   }
 
   String _migrationCastFlow({
-    required int version,
+    int? version,
     required DartType type,
     required AdapterField field,
   }) {
     var currentSuffix = _suffixFromType(type);
     return _findTypeFunction(type, other: () {
-      return '''resultValue = ${cls.name}().get${field.name.capitalize()}(resultValue ,version: $version);''';
+      return '''resultValue = ${cls.name}().get${field.name.capitalize()}(resultValue ,version: ${version != null ? version : 'lastVersion'});''';
     }, nonIterable: () {
       return '''resultValue = CastUtils().cast<${_displayString(type)}>(currentValue: resultValue);''';
     });
