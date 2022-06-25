@@ -50,7 +50,7 @@ class ClassBuilder extends Builder {
       for (int i = 0; i < numOfFields; i++)
         reader.readByte(): reader.read(),
     };
-    int? currentVersion = fields[${fields.last.index + 1}] as int?;
+    int? currentVersion = fields[0] as int?;
     return ${cls.name}(
     ''');
 
@@ -140,19 +140,19 @@ class ClassBuilder extends Builder {
     }
   }
 
-  String _value(AdapterField? field) {
+  String _value(AdapterField field) {
     String value;
-    if (field?.versioningFlow.isNotEmpty ?? false) {
+    if (field.versioningFlow.isNotEmpty) {
       value = _migrationCast(field);
     } else {
-      value = _cast(field!.type, 'fields[${field.index}]');
+      value = _cast(field.type, 'fields[${field.index + 1}]');
     }
-    if (field?.defaultValue?.isNull != false) return value;
-    return 'fields[${field?.index}] == null ? ${constantToString(field?.defaultValue!)} : $value';
+    if (field.defaultValue?.isNull != false) return value;
+    return 'fields[${field.index + 1}] == null ? ${constantToString(field.defaultValue!)} : $value';
   }
 
-  String _migrationCast(AdapterField? field) {
-    return '''${field?.name}Migration(field: fields[${field?.index ?? 0}], currentVersion: currentVersion ?? 1)''';
+  String _migrationCast(AdapterField field) {
+    return '''${field.name}Migration(field: fields[${field.index + 1}], currentVersion: currentVersion ?? 1)''';
   }
 
   String _cast(DartType type, String variable, {String? nameOfVariable}) {
@@ -230,14 +230,14 @@ class ClassBuilder extends Builder {
     var code = StringBuffer();
     code.writeln('writer');
     code.writeln('..writeByte(${getters.length + 1})');
+    code.writeln('..writeByte(0)');
+    code.writeln('..write($hiveVersion)');
     for (var field in getters) {
       var value = _convertIterable(field.type, field);
       code.writeln('''
-      ..writeByte(${field.index})
+      ..writeByte(${field.index + 1})
       ..write($value)''');
     }
-    code.writeln('..writeByte(${getters.length})');
-    code.writeln('..write($hiveVersion)');
     code.writeln(';');
 
     return code.toString();
